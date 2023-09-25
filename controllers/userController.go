@@ -1,60 +1,38 @@
 package controllers
 
 import (
-	"Prioritas2/config"
-	"Prioritas2/models"
+	"Cobain/config"
+	"Cobain/models"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
 // get all users
 func GetUsersController(c echo.Context) error {
 	var users []models.User
 
-	result := config.DB.Find(&users)
-
-	if result.Error != nil {
-		return c.JSON(http.StatusBadRequest, models.BaseResponse{
-			Status:  false,
-			Message: "Failed to get all users",
-			Data:    nil,
-		})
+	if err := config.DB.Find(&users).Error; err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	return c.JSON(http.StatusOK, models.BaseResponse{
-		Status:  true,
-		Message: "Success get all users",
-		Data:    users,
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success get all users",
+		"users":   users,
 	})
 }
 
 // get user by id
 func GetUserController(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("id"))
+	userID := c.Param("id")
+	var users models.User
+	// SELECT * FROM users WHERE id LIKE userID LIMIT BY 1
+	result := config.DB.First(&users, userID)
 
-	// Fetch the user by their ID from the database using GORM
-	var user models.User
-	result := config.DB.Preload("Blogs").First(&user, userID)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return c.JSON(http.StatusNotFound, models.BaseResponse{
-				Status:  false,
-				Message: "ID Not Found",
-				Data:    nil,
-			})
-		}
-		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
-			Status:  false,
-			Message: "Failed to fetch ID",
-			Data:    nil,
-		})
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error)
 	}
-
-	return c.JSON(http.StatusOK, models.BaseResponse{
-		Status:  true,
-		Message: "Success",
-		Data:    user,
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success get all users",
+		"users":   result,
 	})
 }
 
@@ -62,96 +40,53 @@ func GetUserController(c echo.Context) error {
 func CreateUserController(c echo.Context) error {
 	user := models.User{}
 	c.Bind(&user)
+	save := config.DB.Save(&user)
 
-	if err := config.DB.Save(&user).Error; err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	if save.Error != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, save.Error)
 	}
-	return c.JSON(http.StatusOK, models.BaseResponse{
-		Status:  true,
-		Message: "Success",
-		Data:    user,
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success create new user",
+		"user":    user,
 	})
 }
 
 // delete user by id
 func DeleteUserController(c echo.Context) error {
-	userID, _ := strconv.Atoi(c.Param("id"))
-
-	// Fetch the complaint by its ID from the database using GORM
-	var foundID models.User
-	result := config.DB.Delete(&foundID, userID)
+	// your solution here
+	userID := c.Param("id")
+	var user models.User
+	result := config.DB.Delete(&user, userID)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return c.JSON(http.StatusNotFound, models.BaseResponse{
-				Status:  false,
-				Message: "ID Not Found",
-				Data:    nil,
-			})
-		}
-		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
-			Status:  false,
-			Message: "Failed to fetch ID",
-			Data:    nil,
-		})
+		return echo.NewHTTPError(http.StatusBadRequest, result.Error)
 	}
-
-	return c.JSON(http.StatusOK, models.BaseResponse{
-		Status:  true,
-		Message: "User Deleted",
-		Data:    nil,
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success delete",
+		"user":    nil,
 	})
+
 }
 
 // update user by id
 func UpdateUserController(c echo.Context) error {
-	var updatedUser models.User
+	// masang body ke dalam struktur data User
+	var payload models.User
+	c.Bind(&payload)
 
-	if err := c.Bind(&updatedUser); err != nil {
-		return c.JSON(http.StatusBadRequest, models.BaseResponse{
-			Status:  false,
-			Message: "Invalid request body",
-			Data:    nil,
-		})
-	}
+	// nyari data berdasarkan id
+	userID := c.Param("id")
+	edit := models.User{}
+	// fetching ke DB (nyari ke db dan masukin ke dalam result)
+	config.DB.First(&edit, userID)
 
-	userID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, models.BaseResponse{
-			Status:  false,
-			Message: "Invalid user ID",
-			Data:    nil,
-		})
-	}
-
-	// Fetch the existing user
-	existingUser := models.User{}
-	err = config.DB.First(&existingUser, userID).Error
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
-			Status:  false,
-			Message: "Failed to fetch user",
-			Data:    nil,
-		})
-	}
-
-	// Update user information
-	existingUser.Email = updatedUser.Email
-	existingUser.Name = updatedUser.Name
-	existingUser.Password = updatedUser.Password
-
-	// Save the updated user
-	err = config.DB.Save(&existingUser).Error
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.BaseResponse{
-			Status:  false,
-			Message: "Failed to update user",
-			Data:    nil,
-		})
-	}
-
-	return c.JSON(http.StatusOK, models.BaseResponse{
-		Status:  true,
-		Message: "User updated successfully",
-		Data:    existingUser,
+	// masukin body ke variabel
+	edit.Name = payload.Name
+	edit.Email = payload.Email
+	edit.Password = payload.Password
+	// save ke db
+	config.DB.Save(&edit)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success edit",
+		"user":    edit,
 	})
 }

@@ -1,29 +1,28 @@
 package config
 
 import (
-	"Prioritas2/models"
+	"Cobain/models"
 	"fmt"
-	"log"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 )
 
 var (
 	DB *gorm.DB
 )
 
-func init() {
+func Init() {
 	InitDB()
-	InitialMigration()
+	MigrateDB()
 }
 
 func InitDB() {
-	username := ""
-	password := ""
-	host := ""
+	username := "rens02"
+	password := "mysql1234"
+	host := "35.187.224.18"
 	port := "3306"
-	name := ""
+	name := "beritabaru"
 
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		username,
@@ -39,6 +38,6 @@ func InitDB() {
 	}
 }
 
-func InitialMigration() {
-	DB.AutoMigrate(&models.User{}, &models.Books{}, &models.Blog{})
+func MigrateDB() {
+	DB.AutoMigrate(&models.User{})
 }
