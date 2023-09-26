@@ -26,6 +26,7 @@ func LoginController(c echo.Context) error {
 			Data:    nil,
 		})
 	}
+
 	tokenResult := middleware.GenerateJWT(user.ID, user.Name)
 
 	var response models.UserAuthResponse

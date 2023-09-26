@@ -7,7 +7,7 @@ import (
 
 func Login(password string, email string) (bool, error) {
 	var user models.User
-	// SELECT * FROM users WHERE id = "1b74413f-f3b8-409f-ac47-e8c062e3472a";
+	// SELECT * FROM users WHERE password = "parameter" & email = "parameter";
 	result := config.DB.First(&user, "password = ? AND email = ?", password, email)
 	if result.Error != nil {
 		return false, result.Error

@@ -12,10 +12,13 @@ type jwtCustomClaims struct {
 }
 
 func GenerateJWT(id uint, name string) string {
+
 	var payloadData jwtCustomClaims
+
 	payloadData.ID = id
 	payloadData.Name = name
 	payloadData.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute * 60))
+
 	// Create token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payloadData)
 	t, _ := token.SignedString([]byte("1234"))
