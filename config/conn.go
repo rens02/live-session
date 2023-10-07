@@ -19,11 +19,11 @@ func init() {
 }
 
 func InitDB() {
-	username := ""
-	password := ""
-	host := ""
+	username := "admin"
+	password := "lenovo123"
+	host := "database-alta.c9p6yygra7ia.ap-southeast-1.rds.amazonaws.com"
 	port := "3306"
-	name := ""
+	name := "alta"
 
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		username,
