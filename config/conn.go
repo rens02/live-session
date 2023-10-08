@@ -4,7 +4,10 @@ import (
 	"Prioritas2/models"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -14,25 +17,34 @@ var (
 )
 
 func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
 	InitDB()
 	InitialMigration()
 }
 
 func InitDB() {
-	username := "admin"
-	password := "lenovo123"
-	host := "database-alta.c9p6yygra7ia.ap-southeast-1.rds.amazonaws.com"
-	port := "3306"
-	name := "alta"
+	username := os.Getenv("DB_USERNAME")
+	password := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	portStr := os.Getenv("DB_PORT")
+	name := os.Getenv("DB_NAME")
 
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		log.Fatalf("Invalid port in .env: %v", err)
+	}
+
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		username,
 		password,
 		host,
 		port,
 		name,
 	)
-	var err error
 	DB, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %s", err.Error())

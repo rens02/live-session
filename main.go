@@ -4,9 +4,11 @@ import (
 	"Prioritas2/controllers"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"os"
 )
 
 func main() {
+	secretKey := os.Getenv("JWT_SECRET_KEY")
 	// create a new echo instance
 	e := echo.New()
 	// Route / to handler function
@@ -18,7 +20,7 @@ func main() {
 
 	//JWT Authenticated
 	eAuth := e.Group("")
-	eAuth.Use(echojwt.JWT([]byte("1234")))
+	eAuth.Use(echojwt.JWT([]byte(secretKey)))
 	// Users Authenticated
 	eAuth.GET("/users", controllers.GetUsersController)
 	eAuth.GET("/users/:id", controllers.GetUserController)
